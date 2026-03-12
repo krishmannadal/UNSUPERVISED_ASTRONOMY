@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+
+# Environment
+venv/
+.env/
+
+# Data
+data/
+*.fits
+
+# Outputs
+outputs/
+*.npy
+*.pth
+*.png
+
+# MLflow
+mlruns/
+
+# OS
+.DS_Store
