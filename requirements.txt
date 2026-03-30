@@ -99,3 +99,4 @@ waitress==3.0.2
 wcwidth==0.6.0
 Werkzeug==3.1.6
 zipp==3.23.0
+pytorch-msssim==1.0.0
