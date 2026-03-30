@@ -3,85 +3,96 @@
 **Subproject:** EXXA2 — Exoplanet Atmosphere Characterization  
 **Organization:** ML4Sci  
 
-This project uses a Convolutional Autoencoder with unsupervised clustering (UMAP + HDBSCAN) to discover morphological patterns in synthetic ALMA observations of protoplanetary disks.
+This repository contains the full automated pipeline for the **EXXA2** GSoC tasks: **General Test** (Unsupervised Clustering) and **Image-Based Test** (Convolutional Autoencoder).
 
 ---
 
-## Pipeline
+## 🛠 Step-by-Step Terminal Guide
 
-```
-FITS data → Preprocessing → Augmentation → ConvAutoencoder (train)
-          → Latent Extraction → UMAP → HDBSCAN → Cluster Analysis
-```
+Follow these steps to run the pipeline locally from your terminal.
 
-## Quick Start
-
+### 1. Repository Setup
 ```bash
-# 1. Clone and install
+# Clone the repository
 git clone https://github.com/krishmannadal/UNSUPERVISED_ASTRONOMY.git
 cd UNSUPERVISED_ASTRONOMY
-python -m venv venv && venv\Scripts\activate   # Windows
+
+# Create and activate a fresh virtual environment
+python -m venv venv
+# On Windows:
+venv\Scripts\activate
+# On Linux/macOS:
+source venv/bin/activate
+
+# Install all dependencies
 pip install -r requirements.txt
+```
 
-# 2. Place .fits data in data/continuum_data_subset/
+### 2. Data Preparation
+The pipeline expects `.fits` files in the `data/continuum_data_subset/` directory.
 
-# 3. Train the autoencoder
+**Option A - Real Data:**  
+Place your official EXXA test FITS files (1250 microns ALMA continuum) into:  
+`data/continuum_data_subset/`
+
+**Option B - Synthetic Data (Quick Start):**  
+If you do not have the official dataset yet, you can generate 100 synthetic disks to test the pipeline:
+```bash
+python generate_dummy_data.py
+```
+
+### 3. Model Training
+Train the Convolutional Autoencoder. This script uses **GPU Mixed-Precision (AMP)** if a CUDA-enabled GPU is detected, and gracefully falls back to CPU otherwise.
+```bash
 python -m training.train_autoencoder
+```
 
-# 4. Run the full pipeline (inference + clustering)
+### 4. Running the Pipeline
+Run the full inference, clustering, and analysis pipeline. This will:
+1. Load the data and pre-trained model.
+2. Calculate **MSE** and **MS-SSIM** reconstruction metrics.
+3. Perform **UMAP** dimensionality reduction.
+4. Execute **HDBSCAN** clustering.
+5. Generate **Radial Brightness Profiles** and **Cluster Prototypes**.
+```bash
 python EXXA_GSoC2026_Pipeline.py
-
-# Or open the Jupyter Notebook version:
-jupyter lab notebooks/EXXA_GSoC2026_Pipeline.ipynb
 ```
 
-## Project Structure
+### 5. Viewing Results
+After running, check the `outputs/` folder for:
+- `umap_clusters.png`: Visualization of the discovered groups.
+- `reconstruction_comparison.png`: Visual evaluation of the autoencoder.
+- `radial_profiles_by_cluster.png`: Analysis of physical planet signatures.
+- `cluster_0_prototypes.png` (etc.): Representative images for each cluster.
 
-```
-├── dataset/
-│   └── disk_dataset.py       # FITS loader with augmentation
-├── models/
-│   ├── autoencoder.py        # ConvAutoencoder (encode/decode API)
-│   └── autoencoder_final.pth # Pretrained weights
-├── training/
-│   └── train_autoencoder.py  # GPU training with AMP + val split
-├── embeddings/
-│   └── latent_extract.py     # Latent vector extraction
-├── clustering/
-│   └── hdbscan_cluster.py    # UMAP + HDBSCAN clustering
-├── analysis/
-│   ├── radial_profile.py     # Radial brightness profiles
-│   └── cluster_prototypes.py # Mean images per cluster
-├── EXXA_GSoC2026_Pipeline.py # End-to-end pipeline script
-├── notebooks/
-│   └── EXXA_GSoC2026_Pipeline.ipynb  # Jupyter notebook version
-└── generate_dummy_data.py    # Synthetic test data generator
-```
+---
 
-## Key Features
+## 🧪 Google Colab (Preferred Method)
+If you prefer to run this in the cloud (recommended by ML4Sci judges), use the standalone notebook:  
+[Link to Standalone Colab Notebook](Your_Colab_Link_Here)
 
-| Feature | Implementation |
-|:--------|:---------------|
-| Data format | FITS data cubes, layer 0 extracted |
-| Preprocessing | Percentile normalization [1%, 99%], resize to 256×256 |
-| Augmentation | Random 90° rotation, H-flip, V-flip (prevents angle bias) |
-| Model | 5-block CNN encoder/decoder with BatchNorm, 64-dim latent |
-| Training | AMP mixed-precision, MSE + structural SSIM loss, train/val split |
-| Metrics | MSE, Multiscale SSIM (pytorch-msssim) |
-| Clustering | UMAP → HDBSCAN (density-based, no k required) |
-| Validation | Silhouette score, radial profiles, cluster prototypes |
+Or open the local version and upload it:  
+`notebooks/colab_EXXA2.ipynb`
 
-## Metrics (on synthetic data)
+---
 
-| Metric | Value |
-|:-------|:------|
-| MSE | 0.0127 |
-| MS-SSIM | 0.4901 |
-| Clusters | 4 |
-| Silhouette | 0.92 |
+## 🏗 Project Architecture
 
-## Requirements
+| Component | Responsibility |
+|:---|:---|
+| `dataset/` | Robust FITS loading, 99th percentile normalization, automated augmentation |
+| `models/` | ConvAutoencoder with BatchNorm and public `encode()`/`decode()` API |
+| `training/` | GPU-optimized training with structural loss (MSE + SSIM) and Val split |
+| `clustering/` | UMAP + HDBSCAN for density-based discovery |
+| `analysis/` | Physical interpretability tools (Radial profiles, Prototypes) |
 
-- Python 3.10+
-- PyTorch 2.x (CUDA optional)
-- See `requirements.txt` for full list
+## 📊 Performance Summary (Synthetic Benchmark)
+- **Clusters Detected:** 4 distinct morphological groups.
+- **Silhouette Score:** 0.92 (High cluster separation).
+- **Mean MS-SSIM:** 0.49.
+- **Mean MSE:** 0.012.
+
+---
+
+## 📜 License & Acknowledgments
+Developed for the GSoC 2026 EXXA program. Data simulation mimics standard ALMA configurations. Reference: Terry et al. (2022).
